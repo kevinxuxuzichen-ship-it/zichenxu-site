@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITYWALK // ANTI-BORING LAB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@700&family=Shrikhand&family=Space+Grotesk:wght@900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Palette strictly extracted from the reference images */
+            --bg-beige: #e5dac9;
+            --navy: #0e1d3e;
+            --pink: #ff85b3;
+            --green: #2ecc40;
+            --orange: #ff4d29;
+            --purple: #b366ff;
+            --yellow: #ffdc00;
+            --black: #0a0a0a;
+            --border: 5px solid var(--black);
+        }
+
+        ::-webkit-scrollbar { display: none; }
+
+        /* Custom Pixel Hand Cursor for interactive elements */
+        .clickable, button, input, textarea, label {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%23000"><path d="M9 1h4v2h2v2h2v4h2v2h2v8h-2v2h-2v2h-8v-2H5v-2H3v-8h2V9h2V7h2V3z" fill="white"/><path d="M10 2h2v2h2v2h2v4h2v2h2v6h-2v2h-2v2h-6v-2H6v-2H4v-6h2V8h2V6h2V4h2V2z"/></svg>'), pointer !important;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-beige);
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--black);
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+
+        /* ==================== 3D CAROUSEL DRINK ARCHIVE UI ==================== */
+        .carousel-wrapper {
+            width: 100vw; height: 70vh; background: #fff3ed;
+            border-bottom: var(--border); display: grid; position: relative; z-index: 10;
+        }
+        .scene, .a3d { display: grid; }
+        .scene {
+            overflow: hidden; perspective: 35em; width: 100%; height: 100%;
+            mask: linear-gradient(90deg, #0000, red 20% 80%, #0000);
+            -webkit-mask: linear-gradient(90deg, #0000, red 20% 80%, #0000);
+        }
+        .a3d {
+            place-self: center; transform-style: preserve-3d; animation: ry 32s linear infinite;
+        }
+        @keyframes ry { to { transform: rotateY(1turn); } }
+        .card-3d {
+            --w: 17.5em; --ba: calc(1turn / var(--n)); grid-area: 1 / 1;
+            width: var(--w); aspect-ratio: 7 / 10; border-radius: 1.5em;
+            border: 4px solid var(--black); box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+            backface-visibility: hidden;
+            transform: rotateY(calc(var(--i) * var(--ba))) translateZ(calc(-1 * (0.5 * var(--w) + 0.5em) / tan(0.5 * var(--ba))));
+            background-color: white; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center; overflow: hidden; position: relative;
+        }
+        .card-3d img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 5; border-radius: calc(1.5em - 4px); }
+        .card-3d-title { font-family: 'Shrikhand', cursive; font-size: 2.5rem; color: var(--pink); -webkit-text-stroke: 1px var(--black); line-height: 1.1; z-index: 2; }
+        .card-3d-sub { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; font-weight: bold; color: var(--black); margin-top: 15px; border: 2px dashed var(--black); padding: 5px 10px; z-index: 2; }
+
+        @media (prefers-reduced-motion: reduce) { .a3d { animation-duration: 128s; } }
+        .carousel-title {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            font-family: 'Shrikhand'; font-size: 3rem; color: var(--pink);
+            -webkit-text-stroke: 2px var(--black); z-index: 20; pointer-events: none; text-shadow: 5px 5px 0px var(--yellow);
+        }
+
+        /* ==================== ORIGINAL CSS BELOW ==================== */
+        .marquee-wrapper { background: var(--black); color: var(--bg-beige); border-bottom: var(--border); padding: 10px 0; white-space: nowrap; overflow: hidden; position: relative; z-index: 100; }
+        .marquee-content { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 1.2rem; font-weight: 700; text-transform: uppercase; animation: scroll-left 20s linear infinite; }
+        .marquee-content span { color: var(--pink); margin: 0 15px; }
+        @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        header { padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--border); background: var(--bg-beige); position: relative; }
+        .brand-title { font-family: 'Shrikhand', cursive; font-size: 4rem; color: var(--orange); -webkit-text-stroke: 2px var(--black); line-height: 1; transform: rotate(-2deg); }
+        .quick-nav-container { display: flex; gap: 10px; }
+        .pill-btn { background: var(--black); color: white; padding: 10px 25px; border-radius: 50px; font-family: 'Space Grotesk'; font-size: 1.5rem; font-weight: 900; border: 3px solid var(--black); box-shadow: 4px 4px 0px rgba(0,0,0,0.2); transition: 0.2s; text-transform: uppercase; }
+        .pill-btn.orange { background: var(--orange); color: var(--black); }
+        .pill-btn.pink { background: var(--pink); color: var(--black); }
+        .pill-btn:hover { transform: scale(1.1) rotate(5deg); }
+
+        .floating-art { position: absolute; z-index: 0; pointer-events: none; }
+        .art-bubble-mini { background: white; border: 3px solid var(--black); border-radius: 50px; padding: 10px 20px; font-family: 'IBM Plex Mono'; font-weight: bold; position: absolute; top: -30px; right: -50px; transform: rotate(10deg); }
+        .trex { top: 15%; left: 5%; font-size: 180px; transform: scaleX(-1); }
+        .pigeon { bottom: 5%; right: 5%; font-size: 150px; }
+
+        .input-console { margin: 60px auto; max-width: 1300px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 60px; padding: 0 40px; position: relative; z-index: 10; }
+        .form-panel { background: var(--green); border: var(--border); padding: 50px; box-shadow: 25px 25px 0px var(--navy); transform: rotate(-1deg); display: flex; flex-direction: column; gap: 20px; }
+        .form-panel h2 { font-family: 'Space Grotesk'; font-size: 4rem; line-height: 0.9; margin-bottom: 10px; text-transform: uppercase; letter-spacing: -2px; }
+        input, textarea { width: 100%; padding: 15px 20px; border: 3px solid var(--black); font-size: 1.2rem; font-family: 'IBM Plex Mono', monospace; background: white; outline: none; border-radius: 0; box-shadow: 4px 4px 0px rgba(0,0,0,1); }
+        input:focus, textarea:focus { background: var(--yellow); }
+       
+        .file-zone { height: 120px; border: 4px dashed var(--black); display: flex; align-items: center; justify-content: center; background: var(--bg-beige); font-family: 'Space Grotesk'; font-size: 1.5rem; font-weight: 900; position: relative; transition: 0.3s; }
+        .file-zone:hover { background: var(--pink); }
+        #file-input { position: absolute; width: 100%; height: 100%; opacity: 0; }
+
+        .speech-bubble-container { display: flex; align-items: center; justify-content: center; }
+        .speech-bubble { background: var(--pink); border: var(--border); border-radius: 60px; padding: 60px; position: relative; box-shadow: 20px 20px 0px var(--black); }
+        .speech-bubble::after { content: ''; position: absolute; bottom: -50px; right: 80px; border-width: 50px 30px 0 30px; border-style: solid; border-color: var(--pink) transparent transparent transparent; filter: drop-shadow(5px 5px 0px var(--black)); }
+        .speech-bubble p { font-family: 'Shrikhand', cursive; font-size: 3.5rem; line-height: 1.1; color: var(--navy); text-align: center; }
+
+        .giant-submit-btn { background: var(--pink); border: var(--border); border-radius: 100px; padding: 20px 0; font-family: 'Shrikhand', cursive; font-size: 4rem; color: var(--black); text-align: center; width: 100%; margin-top: 20px; transform: rotate(2deg); transition: 0.2s; box-shadow: 10px 10px 0px var(--orange); }
+        .giant-submit-btn:hover { transform: scale(1.05) rotate(-2deg); background: var(--yellow); }
+
+        .gallery-title { font-family: 'Space Grotesk'; font-size: 12vw; font-weight: 900; text-align: center; letter-spacing: -5px; color: var(--navy); margin: 100px 0 50px 0; line-height: 0.8; border-top: var(--border); border-bottom: var(--border); background: var(--orange); padding: 20px 0; }
+        .timeline { padding: 0 60px 100px 60px; display: flex; flex-direction: column; gap: 100px; max-width: 1400px; margin: 0 auto; }
+        .entry-card { display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px; background: white; border: var(--border); padding: 40px; box-shadow: 20px 20px 0px var(--purple); position: relative; }
+        .entry-card:nth-child(even) { grid-template-columns: 1fr 1.2fr; direction: rtl; background: var(--bg-beige); box-shadow: -20px 20px 0px var(--green); }
+        .entry-card:nth-child(even) > * { direction: ltr; }
+       
+        /* [MODIFIED] Increased height to 600px for a taller vertical portrait aspect ratio */
+        .card-img-wrap { border: var(--border); overflow: hidden; background: var(--black); height: 600px; position: relative; }
+        .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%) contrast(120%); transition: 0.4s; }
+        .card-img-wrap:hover img { filter: grayscale(0%) contrast(100%); transform: scale(1.05); }
+
+        .pill-cluster { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; }
+        .data-pill { background: var(--yellow); border: 3px solid var(--black); border-radius: 50px; padding: 8px 20px; font-family: 'Space Grotesk'; font-weight: 900; font-size: 1.2rem; text-transform: uppercase; }
+        .data-pill.green { background: var(--green); transform: rotate(-5deg); }
+        .data-pill.pink { background: var(--pink); transform: rotate(3deg); margin-left: -15px;}
+        .data-pill.navy { background: var(--navy); color: white; transform: rotate(-2deg); }
+        .card-text h3 { font-family: 'Shrikhand', cursive; font-size: 4rem; line-height: 1; margin-bottom: 20px; text-transform: uppercase; }
+        .card-desc { font-family: 'IBM Plex Mono'; font-size: 1.4rem; font-weight: 700; line-height: 1.4; background: white; padding: 20px; border: 3px dashed var(--black); }
+
+        .wipe-btn { display: block; margin: 0 auto 100px auto; background: #ff0000; color: white; border: var(--border); border-radius: 100px; padding: 15px 40px; font-family: 'Space Grotesk'; font-size: 2rem; font-weight: 900; box-shadow: 8px 8px 0px var(--black); }
+        .wipe-btn:hover { background: var(--black); color: #ff0000; }
+
+        /* ======================= SPOT LAB ======================== */
+        .staggered-divider { width: 100%; background: var(--black); padding: 80px 20px; overflow: hidden; display: flex; flex-direction: column; gap: 10px; border-top: var(--border); border-bottom: var(--border); }
+        .staggered-text { font-family: 'Space Grotesk'; font-size: 7vw; font-weight: 900; color: white; text-transform: uppercase; line-height: 0.9; white-space: nowrap; transition: transform 0.1s ease-out; text-shadow: -3px -3px 0 var(--black), 3px 3px 0 var(--black), 6px 6px 0 #ff0000, 10px 10px 0 var(--purple); }
+        .spot-lab-zone { background-color: #ff0000; color: var(--black); padding: 100px 40px; position: relative; overflow: hidden; }
+        .spot-grid-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 60px; max-width: 1400px; margin: 0 auto; align-items: center; }
+        .mascot-container { position: relative; text-align: center; }
+        .mascot-face { font-size: 15vw; line-height: 1; filter: drop-shadow(15px 15px 0px var(--black)); display: inline-block; transition: transform 0.1s ease-out; z-index: 5; position: relative; }
+        .mascot-text { font-family: 'Shrikhand', cursive; font-size: 3rem; transform: rotate(-10deg); margin-bottom: 20px; color: var(--black); text-shadow: 3px 3px 0px white; }
+        .drag-grab-doodle { font-family: 'IBM Plex Mono'; font-weight: 900; font-size: 1.5rem; margin-top: 30px; border: 3px dashed var(--black); padding: 10px; display: inline-block; transform: rotate(5deg); background: var(--yellow); }
+        .hand-drawn-panel { background: var(--black); color: white; padding: 50px; border-radius: 255px 15px 225px 15px/15px 225px 15px 255px; border: 8px solid white; box-shadow: -20px 20px 0px var(--yellow); position: relative; }
+        .doodle-speech-bubble { position: absolute; top: -60px; right: -30px; background: white; color: var(--black); font-family: 'Shrikhand', cursive; font-size: 2.5rem; padding: 15px 30px; border: 5px solid var(--black); border-radius: 40px; transform: rotate(15deg); box-shadow: 10px 10px 0px var(--pink); z-index: 10; }
+        .doodle-speech-bubble::after { content: ''; position: absolute; bottom: -20px; left: 20px; border-width: 20px 20px 0 0; border-style: solid; border-color: var(--black) transparent transparent transparent; }
+        .hand-drawn-panel input, .hand-drawn-panel textarea { background: transparent; border: none; border-bottom: 4px dashed white; color: var(--green); box-shadow: none; margin-bottom: 20px; font-size: 1.5rem; padding: 10px 5px; }
+        .hand-drawn-panel input::placeholder, .hand-drawn-panel textarea::placeholder { color: rgba(255,255,255,0.5); }
+        .hand-drawn-panel input:focus, .hand-drawn-panel textarea:focus { background: rgba(255,255,255,0.1); transform: none; }
+        .spot-file-zone { height: 80px; border: 4px solid white; border-radius: 255px 15px 225px 15px/15px 225px 15px 255px; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk'; font-size: 1.5rem; color: var(--black); background: var(--pink); cursor: pointer; position: relative; margin-bottom: 20px; transition: 0.2s; }
+        .spot-file-zone:hover { background: var(--green); transform: scale(1.05); }
+        #spot-file-input { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .spot-submit-btn { background: white; color: #ff0000; border: 5px solid #ff0000; font-family: 'Shrikhand', cursive; font-size: 3rem; width: 100%; padding: 10px; border-radius: 15px 225px 15px 255px/255px 15px 225px 15px; cursor: pointer; transition: 0.2s; }
+        .spot-submit-btn:hover { background: var(--yellow); color: var(--black); border-color: var(--black); }
+
+
+        /* ==================== 3D SPOT CUBE ARCHIVE ==================== */
+        #spot-cube-archive { position: relative; background: var(--bg-beige); }
+       
+        .cube-sticky-container {
+            position: sticky; top: 0; height: 100vh; width: 100vw; display: flex;
+            align-items: center; justify-content: flex-end; padding-right: 10%;
+            overflow: hidden; border-top: var(--border);
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 20px, transparent 20px, transparent 40px);
+        }
+
+        #spot-scene {
+            perspective: 1500px;
+            width: 400px;
+            height: 600px;
+            z-index: 5;
+        }
+
+        #spot-cube {
+            width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
+            transform: rotateX(90deg) rotateY(0deg); will-change: transform;
+        }
+
+        .cube-face {
+            position: absolute; width: 100%; height: 100%; border: var(--border); background: white;
+            overflow: hidden; backface-visibility: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .cube-face img { width: 100%; height: 100%; object-fit: cover; filter: contrast(110%) grayscale(20%); }
+
+        .cube-empty-text { font-family: 'Shrikhand'; font-size: 3rem; color: var(--pink); -webkit-text-stroke: 2px var(--black); text-align: center; line-height: 1; text-shadow: 4px 4px 0px var(--yellow); }
+
+        .cube-face[data-face="front"]  { transform: translateZ(200px); }
+        .cube-face[data-face="back"]   { transform: rotateY(180deg) translateZ(200px); }
+        .cube-face[data-face="right"]  { transform: rotateY(90deg) translateZ(200px); }
+        .cube-face[data-face="left"]   { transform: rotateY(-90deg) translateZ(200px); }
+        .cube-face[data-face="top"]    { height: 400px; top: 100px; transform: rotateX(90deg) translateZ(300px); }
+        .cube-face[data-face="bottom"] { height: 400px; top: 100px; transform: rotateX(-90deg) translateZ(300px); }
+
+        /* The Scrolling Text Cards */
+        #cube-scroll-track {
+            position: relative; z-index: 10; width: 50%; margin-top: -100vh; pointer-events: none;
+        }
+
+        .spot-section { min-height: 100vh; display: flex; align-items: center; padding: 0 5rem; pointer-events: auto; }
+
+        .spot-text-card {
+            background: white; border: var(--border); padding: 3rem; box-shadow: 15px 15px 0px var(--pink);
+            max-width: 500px; opacity: 0; transform: translateY(50px); transition: all 0.5s ease;
+        }
+        .spot-text-card.visible { opacity: 1; transform: translateY(0); }
+        .spot-text-card .tag { font-family: 'IBM Plex Mono'; color: white; background: var(--navy); padding: 5px 15px; font-weight: bold; border-radius: 50px; display: inline-block; margin-bottom: 20px; font-size: 0.9rem;}
+        .spot-text-card h2 { font-family: 'Space Grotesk'; font-size: 3.5rem; text-transform: uppercase; line-height: 1; margin-bottom: 15px; color: var(--orange); }
+        .spot-text-card p { font-family: 'IBM Plex Mono'; font-size: 1.2rem; line-height: 1.4; color: var(--black); }
+
+    </style>
+</head>
+<body>
+
+    <div class="marquee-wrapper">
+        <div class="marquee-content">
+            CITYWALK LOG <span>★</span> ANTI COMPLICATING THINGS <span>★</span> DRINK BETTER <span>★</span> NO BULLSHIT <span>★</span> CITYWALK LOG <span>★</span> ANTI COMPLICATING THINGS <span>★</span> DRINK BETTER <span>★</span> NO BULLSHIT <span>★</span>
+        </div>
+    </div>
+
+    <header>
+        <div class="brand-title">THINGY<br>DRINKY.</div>
+        <div class="quick-nav-container">
+            <div class="pill-btn orange clickable">QUICK</div>
+            <div class="pill-btn pink clickable">NAV</div>
+        </div>
+    </header>
+
+    <section class="carousel-wrapper">
+        <div class="carousel-title">3D ARCHIVE.</div>
+        <div class="scene">
+            <div class="a3d" id="drink-3d-carousel">
+                </div>
+        </div>
+    </section>
+
+    <div class="floating-art trex" style="top: 100vh;">
+        <div class="art-bubble-mini">EXCUSE ME?</div>
+        🦖
+    </div>
+    <div class="floating-art pigeon" style="top: 120vh; right: 5%;">
+        <div class="art-bubble-mini" style="top: -60px; right: 50px; transform: rotate(-15deg); background: var(--yellow);">WORK FUN!</div>
+        🕊️
+    </div>
+
+    <section class="input-console">
+        <div class="form-panel">
+            <h2>WE ARE<br>ANTI<br>BULLSHIT.</h2>
+            <p style="font-family: 'IBM Plex Mono'; font-weight: bold; margin-bottom: 10px;">Log your drink with honesty. No clouding your vision.</p>
+           
+            <input type="text" id="drink-name" placeholder="DRINK NAME..." class="clickable">
+            <input type="text" id="drink-loc" placeholder="WHERE AT?" class="clickable">
+            <input type="date" id="drink-date" class="clickable">
+            <textarea id="drink-desc" rows="3" placeholder="HOW DID IT MAKE YOU FEEL?" class="clickable"></textarea>
+           
+            <div class="file-zone clickable">
+                <span id="file-label">CLICK TO UPLOAD EVIDENCE</span>
+                <input type="file" id="file-input" accept="image/*" class="clickable">
+            </div>
+
+            <button class="giant-submit-btn clickable" onclick="saveRecord()">SYNC IT</button>
+        </div>
+       
+        <div class="speech-bubble-container">
+            <div class="speech-bubble">
+                <p>We believe our clients' <span style="color: white; -webkit-text-stroke: 2px var(--black);">thirst</span> comes first.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="gallery-title">THE BEST 2026</div>
+    <div class="timeline" id="entry-timeline"></div>
+   
+    <div class="staggered-divider">
+        <div class="staggered-text" data-speed="0.2">WE FIND SPOTS</div>
+        <div class="staggered-text" data-speed="-0.1" style="color: var(--yellow); padding-left: 10vw;">THAT LOOK</div>
+        <div class="staggered-text" data-speed="0.3" style="color: var(--pink); padding-left: 5vw;">DAMN GOOD.</div>
+    </div>
+
+    <section class="spot-lab-zone">
+        <div class="spot-grid-layout">
+            <div class="mascot-container">
+                <div class="mascot-text">WHO AM I?<br>SPOT SCOUT</div>
+                <div class="mascot-face" id="spinning-head">🤪</div>
+                <div class="drag-grab-doodle">↓ SCROLL & SNAP ↓</div>
+            </div>
+
+            <div class="hand-drawn-panel">
+                <div class="doodle-speech-bubble">SPOT & STUFF ✌️</div>
+                <input type="text" id="spot-name" placeholder="WANGHONG SPOT NAME" class="clickable">
+                <input type="text" id="spot-vibe" placeholder="VIBE CHECK (e.g. Cyberpunk, Retro...)" class="clickable">
+                <textarea id="spot-desc" rows="2" placeholder="IS IT WORTH THE HYPE?" class="clickable"></textarea>
+               
+                <div class="spot-file-zone clickable">
+                    <span id="spot-file-label">📷 SNAP PHOTO</span>
+                    <input type="file" id="spot-file-input" accept="image/*" class="clickable">
+                </div>
+                <button class="spot-submit-btn clickable" onclick="saveSpot()">PIN TO MAP</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="spot-cube-archive">
+        <div class="cube-sticky-container">
+            <div id="spot-scene">
+                <div id="spot-cube">
+                    <div class="cube-face" data-face="top" id="face-top"></div>
+                    <div class="cube-face" data-face="front" id="face-front"></div>
+                    <div class="cube-face" data-face="right" id="face-right"></div>
+                    <div class="cube-face" data-face="back" id="face-back"></div>
+                    <div class="cube-face" data-face="left" id="face-left"></div>
+                    <div class="cube-face" data-face="bottom" id="face-bottom"></div>
+                </div>
+            </div>
+        </div>
+        <div id="cube-scroll-track"></div>
+    </div>
+
+    <div class="gallery-title">ALL SPOTS ARCHIVE</div>
+    <div class="timeline" id="spot-timeline"></div>
+
+    <button class="wipe-btn clickable" onclick="wipeDatabase()">DELETE EVERYTHING</button>
+
+
+    <script>
+        // =====================================================================
+        // ===================== IMAGE COMPRESSION ENGINE ======================
+        // =====================================================================
+        function escapeEntryText(value) {
+            const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+            return String(value ?? '').replace(/[&<>]/g, character => entities[character]);
+        }
+
+        function photoSource(value) {
+            return typeof value === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(value)
+                ? value
+                : '';
+        }
+
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let width = img.width; let height = img.height;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; }
+                    }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            };
+        }
+
+        // =====================================================================
+        // ======================= DRINK 3D CAROUSEL ===========================
+        // =====================================================================
+        function render3DCarousel() {
+            const carousel = document.getElementById('drink-3d-carousel');
+            const records = JSON.parse(localStorage.getItem('anti_drinks') || '[]');
+
+            const TOTAL_CARDS = 6;
+            carousel.style.setProperty('--n', TOTAL_CARDS);
+           
+            let htmlContent = '';
+            for (let i = 0; i < TOTAL_CARDS; i++) {
+                if (i < records.length) {
+                    htmlContent += `<div class="card-3d" style="--i: ${i}"><img src="${photoSource(records[i].image)}" alt="Drink Photo"></div>`;
+                } else {
+                    htmlContent += `
+                        <div class="card-3d" style="--i: ${i}">
+                            <div class="card-3d-title">EMPTY<br>SLOT</div>
+                            <div class="card-3d-sub">WAITING FOR SYNC</div>
+                        </div>
+                    `;
+                }
+            }
+            carousel.innerHTML = htmlContent;
+        }
+
+        // ================= DRINK LOGIC =================
+        let base64Image = "";
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('file-label').innerText = "PROCESSING...";
+            compressImage(file, function(compressedBase64) {
+                base64Image = compressedBase64;
+                document.getElementById('file-label').innerText = "✓ " + file.name.toUpperCase();
+                document.querySelector('.file-zone').style.background = "var(--yellow)";
+            });
+        });
+
+        function saveRecord() {
+            const name = document.getElementById('drink-name').value;
+            const loc = document.getElementById('drink-loc').value;
+            const date = document.getElementById('drink-date').value;
+            const desc = document.getElementById('drink-desc').value;
+
+            if(!name || !base64Image) { alert("ANTI-BULLSHIT WARNING: WE NEED A NAME AND A PICTURE."); return; }
+
+            const record = { id: Date.now(), name, loc, date, desc, image: base64Image };
+            let records = JSON.parse(localStorage.getItem('anti_drinks') || '[]');
+           
+            try { records.unshift(record); localStorage.setItem('anti_drinks', JSON.stringify(records)); }
+            catch (e) { alert("SYSTEM OVERLOAD! The browser database is full. Please clear data."); return; }
+
+            const carousel = document.getElementById('drink-3d-carousel');
+            carousel.style.animation = 'none';
+            renderRecords();
+            render3DCarousel();
+            void carousel.offsetWidth;
+            carousel.style.animation = 'ry 32s linear infinite';
+           
+            clearForm();
+            window.scrollBy({ top: 500, behavior: 'smooth' });
+        }
+
+        function renderRecords() {
+            const timeline = document.getElementById('entry-timeline');
+            const records = JSON.parse(localStorage.getItem('anti_drinks') || '[]');
+           
+            timeline.innerHTML = records.map((r, index) => {
+                const colors = ['green', 'pink', 'navy', ''];
+                const c1 = colors[Math.floor(Math.random()*colors.length)];
+                const c2 = colors[Math.floor(Math.random()*colors.length)];
+                return `
+                <div class="entry-card">
+                    <div class="card-img-wrap clickable"><img src="${photoSource(r.image)}" alt="drink"></div>
+                    <div class="card-text">
+                        <div class="pill-cluster">
+                            <span class="data-pill ${c1}">LOC: ${escapeEntryText(r.loc || 'EARTH')}</span>
+                            <span class="data-pill ${c2}">DATE: ${escapeEntryText(r.date || 'TODAY')}</span>
+                            <span class="data-pill" style="background: white; transform: rotate(8deg);">#00${records.length - index}</span>
+                        </div>
+                        <h3>${escapeEntryText(r.name)}</h3>
+                        <div class="card-desc">" ${escapeEntryText(r.desc || 'No thoughts, just vibes.')} "</div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function clearForm() {
+            document.getElementById('drink-name').value = '';
+            document.getElementById('drink-loc').value = '';
+            document.getElementById('drink-desc').value = '';
+            document.getElementById('file-label').innerText = "CLICK TO UPLOAD EVIDENCE";
+            document.querySelector('.file-zone').style.background = "var(--bg-beige)";
+            base64Image = "";
+        }
+
+
+        // =====================================================================
+        // ===================== [MODIFIED] SPOT CUBE LOGIC ====================
+        // =====================================================================
+        let spotBase64Image = "";
+
+        document.getElementById('spot-file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('spot-file-label').innerText = "PROCESSING...";
+            compressImage(file, function(compressedBase64) {
+                spotBase64Image = compressedBase64;
+                document.getElementById('spot-file-label').innerText = "✓ GOT IT!";
+                document.querySelector('.spot-file-zone').style.background = "var(--yellow)";
+            });
+        });
+
+        function saveSpot() {
+            const name = document.getElementById('spot-name').value;
+            const vibe = document.getElementById('spot-vibe').value;
+            const desc = document.getElementById('spot-desc').value;
+
+            if(!name || !spotBase64Image) { alert("HEY! WE NEED A SPOT NAME AND A PIC!"); return; }
+
+            const spot = { id: Date.now(), name, vibe, desc, image: spotBase64Image };
+            let spots = JSON.parse(localStorage.getItem('anti_spots') || '[]');
+           
+            try { spots.unshift(spot); localStorage.setItem('anti_spots', JSON.stringify(spots)); }
+            catch (e) { alert("SYSTEM OVERLOAD! Database full."); return; }
+
+            renderSpotCube();
+            renderSpots();
+           
+            document.getElementById('spot-name').value = '';
+            document.getElementById('spot-vibe').value = '';
+            document.getElementById('spot-desc').value = '';
+            document.getElementById('spot-file-label').innerText = "📷 SNAP PHOTO";
+            document.querySelector('.spot-file-zone').style.background = "var(--pink)";
+            spotBase64Image = "";
+           
+            document.querySelector('#spot-cube-archive').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderSpotCube() {
+            const rawSpots = JSON.parse(localStorage.getItem('anti_spots') || '[]');
+           
+            // Limit to top 6
+            let recentSpots = rawSpots.slice(0, 6);
+           
+            // Pad to ensure 6 items
+            while (recentSpots.length < 6) {
+                recentSpots.push({ name: 'EMPTY SPOT', vibe: 'N/A', desc: 'AWAITING DISCOVERY', image: null });
+            }
+
+            // Update Track Content
+            const track = document.getElementById('cube-scroll-track');
+            track.innerHTML = recentSpots.map((s, i) => `
+                <section class="spot-section">
+                    <div class="spot-text-card scroll-reveal">
+                        <div class="tag">#0${i + 1} // ${escapeEntryText(s.vibe)}</div>
+                        <h2>${escapeEntryText(s.name)}</h2>
+                        <p>${escapeEntryText(s.desc)}</p>
+                    </div>
+                </section>
+            `).join('');
+
+            document.getElementById('spot-cube-archive').style.height = `600vh`;
+
+            // [MODIFIED] Perfectly mapped face order based on the 3D scroll math below:
+            // 0 -> bottom, 1 -> front, 2 -> right, 3 -> back, 4 -> left, 5 -> top
+            const faceNames = ['bottom', 'front', 'right', 'back', 'left', 'top'];
+           
+            faceNames.forEach((faceName, i) => {
+                const domFace = document.getElementById(`face-${faceName}`);
+                if (recentSpots[i].image) {
+                    domFace.innerHTML = `<img src="${photoSource(recentSpots[i].image)}" alt="spot">`;
+                } else {
+                    domFace.innerHTML = `<div class="cube-empty-text">NO<br>DATA</div>`;
+                }
+            });
+
+            // Re-bind observers
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+            }, { threshold: 0.3 });
+            document.querySelectorAll('.scroll-reveal').forEach(el => io.observe(el));
+        }
+
+        function renderSpots() {
+            const timeline = document.getElementById('spot-timeline');
+            const spots = JSON.parse(localStorage.getItem('anti_spots') || '[]');
+           
+            timeline.innerHTML = spots.map((s, index) => {
+                const colors = ['green', 'pink', 'navy', ''];
+                const c1 = colors[Math.floor(Math.random()*colors.length)];
+                return `
+                <div class="entry-card">
+                    <div class="card-img-wrap clickable"><img src="${photoSource(s.image)}" alt="spot"></div>
+                    <div class="card-text">
+                        <div class="pill-cluster">
+                            <span class="data-pill ${c1}">VIBE: ${escapeEntryText(s.vibe || 'N/A')}</span>
+                            <span class="data-pill" style="background: white; transform: rotate(8deg);">#00${spots.length - index}</span>
+                        </div>
+                        <h3>${escapeEntryText(s.name)}</h3>
+                        <div class="card-desc">" ${escapeEntryText(s.desc || 'No thoughts, just vibes.')} "</div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // ================= GLOBAL SCROLL LOGIC =================
+        window.addEventListener('scroll', () => {
+            let scrolled = window.pageYOffset;
+           
+            document.querySelectorAll('.staggered-text').forEach(el => {
+                let speed = parseFloat(el.getAttribute('data-speed'));
+                el.style.transform = `translateX(${scrolled * speed}px)`;
+            });
+
+            let head = document.getElementById('spinning-head');
+            if(head) {
+                let rotation = scrolled * 0.2;
+                let scale = 1 + Math.abs(Math.sin(scrolled * 0.005)) * 0.3;
+                head.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+            }
+
+            const cubeArchive = document.getElementById('spot-cube-archive');
+            const rect = cubeArchive.getBoundingClientRect();
+           
+            if (rect.top <= 0 && rect.bottom >= window.innerHeight) {
+                let progress = -rect.top / (rect.height - window.innerHeight);
+                progress = Math.max(0, Math.min(1, progress));
+               
+                const t = progress * 5;
+                const i = Math.min(Math.floor(t), 4);
+                const f = t - i;
+                const ease = (f < 0.5 ? 2 * f * f : -1 + (4 - 2 * f) * f);
+
+                const cubeStops = [
+                    { rx: 90, ry: 0 },      // 0: Faces bottom
+                    { rx: 0, ry: 0 },       // 1: Faces front
+                    { rx: 0, ry: -90 },     // 2: Faces right
+                    { rx: 0, ry: -180 },    // 3: Faces back
+                    { rx: 0, ry: -270 },    // 4: Faces left
+                    { rx: -90, ry: -360 }   // 5: Faces top
+                ];
+
+                const a = cubeStops[i];
+                const b = cubeStops[i + 1];
+                const rx = a.rx + (b.rx - a.rx) * ease;
+                const ry = a.ry + (b.ry - a.ry) * ease;
+
+                document.getElementById('spot-cube').style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+            }
+        });
+
+        function wipeDatabase() {
+            if(confirm("THIS WILL ERASE ALL YOUR SIPS AND SPOTS. ARE YOU SURE?")) {
+                localStorage.removeItem('anti_drinks');
+                localStorage.removeItem('anti_spots');
+                location.reload();
+            }
+        }
+
+        // Initialization
+        window.onload = () => {
+            render3DCarousel();
+            renderRecords();
+            renderSpotCube();
+            renderSpots();
+        };
+    </script>
+</body>
+</html> 
